@@ -141,6 +141,51 @@ JOIN
     PatientAboveAvgRecovery PAR ON DT.DoctorID = PAR.DoctorID  -- Join on DoctorID
 ORDER BY
     DT.DoctorID, PAR.PatientID;
+-- query 6
+WITH DoctorStats AS (
+    SELECT
+        D.DoctorID,
+        D.DoctorName,
+        COUNT(P.PatientID) AS TotalPatients,
+        AVG(P.RecoveryRate) AS AvgRecoveryRate,
+        SUM(P.TreatmentAmount) AS TotalTreatmentCost,
+        ROW_NUMBER() OVER (ORDER BY COUNT(P.PatientID) DESC) AS RankByPatientCount
+    FROM
+        Doctors D
+    LEFT JOIN
+        Patients P ON D.DoctorID = P.DoctorID
+    GROUP BY
+        D.DoctorID, D.DoctorName
+),
+PatientDetails AS (
+    SELECT
+        P.PatientID,
+        P.PatientName,
+        P.Disease,
+        P.RecoveryRate,
+        P.TreatmentAmount,
+        P.DoctorID
+    FROM
+        Patients P
+)
+SELECT
+    DS.DoctorID,
+    DS.DoctorName,
+    DS.TotalPatients,
+    DS.AvgRecoveryRate,
+    DS.TotalTreatmentCost,
+    PD.PatientID,
+    PD.PatientName,
+    PD.Disease,
+    PD.RecoveryRate AS PatientRecoveryRate,
+    PD.TreatmentAmount AS PatientTreatmentAmount
+FROM
+    DoctorStats DS
+LEFT JOIN
+    PatientDetails PD ON DS.DoctorID = PD.DoctorID
+ORDER BY
+    DS.TotalPatients DESC, DS.DoctorID, PD.PatientID;
+
 
 
 
